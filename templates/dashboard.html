@@ -121,9 +121,15 @@
                     {% for battery in recent_batteries %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            <a href="{{ url_for('main.technician_panel') }}?search={{ battery.battery_id }}" class="text-decoration-none">
-                                <strong class="text-primary">{{ battery.battery_id }}</strong>
-                            </a><br>
+                            {% if battery.status == 'Ready' %}
+                                <a href="{{ url_for('main.bill', battery_id=battery.id) }}" class="text-decoration-none">
+                                    <strong class="text-success">{{ battery.battery_id }}</strong>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('main.technician_panel') }}?search={{ battery.battery_id }}" class="text-decoration-none">
+                                    <strong class="text-primary">{{ battery.battery_id }}</strong>
+                                </a>
+                            {% endif %}<br>
                             <small class="text-muted">{{ battery.customer.name }} - {{ battery.customer.mobile }}</small>
                         </div>
                         <span class="badge bg-{{ 'success' if battery.status == 'Ready' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'secondary' }}">

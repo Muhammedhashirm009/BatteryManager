@@ -28,6 +28,10 @@ A Flask-based ERP system for battery repair shops with features for:
 - Updated technician panel to show minimal view unless searched
 - Fixed bill page display issues
 - Updated backup permissions to allow staff users
+- Added secondary mobile number field to customer records
+- Implemented monthly and yearly reporting functionality
+- Made battery IDs clickable: Ready status → Bill page, Others → Technician page
+- Fixed billing summary display and shop name integration
 
 ## Environment Variables Required
 - `SESSION_SECRET`: Flask session secret key
