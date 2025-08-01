@@ -1,0 +1,100 @@
+/* Print-specific styles */
+@media print {
+    /* Hide non-essential elements */
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Show print-only elements */
+    .print-only {
+        display: block !important;
+    }
+    
+    /* Page setup */
+    @page {
+        margin: 0.5in;
+        size: A4;
+    }
+    
+    /* Body styles */
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+        color: black !important;
+        background: white !important;
+    }
+    
+    /* Remove shadows and borders */
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+    
+    .card-body {
+        padding: 0 !important;
+    }
+    
+    /* Table styles */
+    table {
+        border-collapse: collapse !important;
+    }
+    
+    table, th, td {
+        border: 1px solid black !important;
+    }
+    
+    /* Heading styles */
+    h1, h2, h3, h4, h5, h6 {
+        color: black !important;
+        page-break-after: avoid;
+    }
+    
+    /* Prevent page breaks */
+    .card-body {
+        page-break-inside: avoid;
+    }
+    
+    /* Badge styles for print */
+    .badge {
+        border: 1px solid black !important;
+        background: white !important;
+        color: black !important;
+        padding: 2px 4px !important;
+    }
+    
+    /* Button styles (just in case) */
+    .btn {
+        display: none !important;
+    }
+    
+    /* Ensure text is black */
+    * {
+        color: black !important;
+        background: white !important;
+    }
+    
+    /* Special handling for text-muted */
+    .text-muted {
+        color: #666 !important;
+    }
+    
+    /* HR styles */
+    hr {
+        border: 1px solid black !important;
+        margin: 10px 0 !important;
+    }
+}
+
+/* Receipt specific print styles */
+@media print {
+    #receipt-content {
+        max-width: 400px;
+        margin: 0 auto;
+        font-size: 11pt;
+    }
+    
+    #bill-content {
+        font-size: 12pt;
+    }
+}

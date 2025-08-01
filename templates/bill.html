@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Service Bill - {{ battery.battery_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header text-center no-print">
+                <h4><i class="fas fa-file-invoice me-2"></i>Service Bill</h4>
+            </div>
+            <div class="card-body" id="bill-content">
+                <!-- Bill Header -->
+                <div class="text-center mb-4">
+                    <h2>BATTERY REPAIR SERVICE</h2>
+                    <p class="mb-1">Service Bill</p>
+                    <hr>
+                </div>
+                
+                <!-- Bill Details -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <strong>Bill No:</strong> BILL-{{ battery.battery_id }}<br>
+                        <strong>Battery ID:</strong> {{ battery.battery_id }}
+                    </div>
+                    <div class="col-6 text-end">
+                        <strong>Bill Date:</strong> {{ moment().format('DD/MM/YYYY') if moment else battery.inward_date.strftime('%d/%m/%Y') }}<br>
+                        <strong>Received Date:</strong> {{ battery.inward_date.strftime('%d/%m/%Y') }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Customer Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><strong>Customer Details:</strong></h6>
+                        <address>
+                            <strong>{{ battery.customer.name }}</strong><br>
+                            Mobile: {{ battery.customer.mobile }}
+                        </address>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>Battery Details:</strong></h6>
+                        <p>
+                            Type: {{ battery.battery_type }}<br>
+                            Voltage: {{ battery.voltage }}<br>
+                            Capacity: {{ battery.capacity }}
+                        </p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Service Details -->
+                <div class="mb-4">
+                    <h6><strong>Service History:</strong></h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Comments</th>
+                                    <th>Technician</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in battery.status_history %}
+                                <tr>
+                                    <td>{{ history.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ history.status }}</td>
+                                    <td>{{ history.comments or '-' }}</td>
+                                    <td>{{ history.user.full_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Billing Summary -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6><strong>Services Provided:</strong></h6>
+                        <ul>
+                            <li>Battery diagnosis and testing</li>
+                            <li>Repair and maintenance services</li>
+                            <li>Quality assurance testing</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6><strong>Billing Summary</strong></h6>
+                                <div class="d-flex justify-content-between">
+                                    <span>Service Charges:</span>
+                                    <span>₹{{ "%.2f"|format(battery.service_price) }}</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total Amount:</strong>
+                                    <strong>₹{{ "%.2f"|format(battery.service_price) }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Terms and Conditions -->
+                <div class="mb-3">
+                    <h6><strong>Terms & Conditions:</strong></h6>
+                    <ul class="small">
+                        <li>3 months warranty on repair services</li>
+                        <li>Battery must be collected within 30 days</li>
+                        <li>No warranty on battery physical damage</li>
+                        <li>Payment due upon collection</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-1"><strong>Status: {{ battery.status }}</strong></p>
+                    <small class="text-muted">Thank you for your business!</small>
+                </div>
+            </div>
+            <div class="card-footer text-center no-print">
+                <button onclick="window.print()" class="btn btn-success me-2">
+                    <i class="fas fa-print me-1"></i>Print Bill
+                </button>
+                <a href="{{ url_for('main.search') }}" class="btn btn-secondary">
+                    <i class="fas fa-search me-1"></i>Back to Search
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

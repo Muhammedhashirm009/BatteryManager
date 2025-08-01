@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Receipt - {{ battery.battery_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header text-center no-print">
+                <h4><i class="fas fa-receipt me-2"></i>Battery Receipt</h4>
+            </div>
+            <div class="card-body" id="receipt-content">
+                <!-- Receipt Header -->
+                <div class="text-center mb-4">
+                    <h3>BATTERY REPAIR SERVICE</h3>
+                    <p class="mb-1">Battery Inward Receipt</p>
+                    <hr>
+                </div>
+                
+                <!-- Receipt Details -->
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <strong>Receipt No:</strong><br>
+                        {{ battery.battery_id }}
+                    </div>
+                    <div class="col-6 text-end">
+                        <strong>Date & Time:</strong><br>
+                        {{ battery.inward_date.strftime('%d/%m/%Y %H:%M') }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Customer Details -->
+                <div class="mb-3">
+                    <h6><strong>Customer Details:</strong></h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="30%">Name:</td>
+                            <td><strong>{{ battery.customer.name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Mobile:</td>
+                            <td><strong>{{ battery.customer.mobile }}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <hr>
+                
+                <!-- Battery Details -->
+                <div class="mb-3">
+                    <h6><strong>Battery Details:</strong></h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td width="30%">Type:</td>
+                            <td>{{ battery.battery_type }}</td>
+                        </tr>
+                        <tr>
+                            <td>Voltage:</td>
+                            <td>{{ battery.voltage }}</td>
+                        </tr>
+                        <tr>
+                            <td>Capacity:</td>
+                            <td>{{ battery.capacity }}</td>
+                        </tr>
+                        <tr>
+                            <td>Status:</td>
+                            <td><span class="badge bg-secondary">{{ battery.status }}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <hr>
+                
+                <!-- Important Notes -->
+                <div class="mb-4">
+                    <h6><strong>Important Notes:</strong></h6>
+                    <ul class="small">
+                        <li>Please keep this receipt safe for battery collection</li>
+                        <li>Battery ID: <strong>{{ battery.battery_id }}</strong> is required for all inquiries</li>
+                        <li>Estimated repair time: 2-5 working days</li>
+                        <li>Final charges will be communicated after diagnosis</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <small class="text-muted">Thank you for choosing our service!</small>
+                </div>
+            </div>
+            <div class="card-footer text-center no-print">
+                <button onclick="window.print()" class="btn btn-primary me-2">
+                    <i class="fas fa-print me-1"></i>Print Receipt
+                </button>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-home me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

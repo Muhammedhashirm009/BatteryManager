@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4><i class="fas fa-battery-half me-2"></i>Battery Repair ERP</h4>
+                <p class="mb-0 text-muted">Please sign in to continue</p>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <small class="text-muted">
+                    Default logins:<br>
+                    Staff: username: <code>staff</code>, password: <code>staff123</code><br>
+                    Technician: username: <code>technician</code>, password: <code>tech123</code>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

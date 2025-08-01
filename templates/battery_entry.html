@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Battery Entry - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-plus me-2"></i>Register New Battery</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="customer_name" class="form-label">Customer Name *</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mobile" class="form-label">Mobile Number *</label>
+                                <input type="tel" class="form-control" id="mobile" name="mobile" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="battery_type" class="form-label">Battery Type/Name *</label>
+                                <input type="text" class="form-control" id="battery_type" name="battery_type" 
+                                       placeholder="e.g., Exide Car Battery" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="voltage" class="form-label">Voltage *</label>
+                                <select class="form-select" id="voltage" name="voltage" required>
+                                    <option value="">Select Voltage</option>
+                                    <option value="6V">6V</option>
+                                    <option value="12V">12V</option>
+                                    <option value="24V">24V</option>
+                                    <option value="48V">48V</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="capacity" class="form-label">Capacity (Ah) *</label>
+                                <input type="text" class="form-control" id="capacity" name="capacity" 
+                                       placeholder="e.g., 100Ah" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Register Battery
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-info">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Information</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Battery ID will be auto-generated (e.g., BAT0001, BAT0002)</li>
+                    <li>Initial status will be set to "Received"</li>
+                    <li>A receipt will be generated after successful registration</li>
+                    <li>Customer information will be saved for future use</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

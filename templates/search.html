@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-search me-2"></i>Search Batteries</h2>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="POST">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search_query" 
+                       placeholder="Search by Battery ID, Customer Name, or Mobile Number" 
+                       value="{{ search_query }}" required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list me-2"></i>Search Results ({{ results|length }} found)</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Battery ID</th>
+                        <th>Customer</th>
+                        <th>Battery Details</th>
+                        <th>Status</th>
+                        <th>Received Date</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for battery in results %}
+                    <tr>
+                        <td><strong>{{ battery.battery_id }}</strong></td>
+                        <td>
+                            {{ battery.customer.name }}<br>
+                            <small class="text-muted">{{ battery.customer.mobile }}</small>
+                        </td>
+                        <td>
+                            {{ battery.battery_type }}<br>
+                            <small class="text-muted">{{ battery.voltage }} / {{ battery.capacity }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if battery.status == 'Ready' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'secondary' }}">
+                                {{ battery.status }}
+                            </span>
+                        </td>
+                        <td>{{ battery.inward_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if battery.service_price > 0 %}
+                                ₹{{ "%.2f"|format(battery.service_price) }}
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.receipt', battery_id=battery.id) }}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-receipt"></i>
+                                </a>
+                                {% if battery.status == 'Ready' %}
+                                <a href="{{ url_for('main.bill', battery_id=battery.id) }}" 
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-file-invoice"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% elif search_query %}
+<div class="text-center py-5">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No Results Found</h4>
+    <p class="text-muted">No batteries found matching "{{ search_query }}"</p>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">Search Batteries</h4>
+    <p class="text-muted">Enter a Battery ID, Customer Name, or Mobile Number to search</p>
+</div>
+{% endif %}
+{% endblock %}

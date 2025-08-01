@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-home me-2"></i>Dashboard</h2>
+    <span class="badge bg-info">{{ current_user.role.replace('_', ' ').title() }}</span>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary">
+            <div class="card-body text-center">
+                <i class="fas fa-battery-full fa-2x mb-2"></i>
+                <h3>{{ total_batteries }}</h3>
+                <p class="mb-0">Total Batteries</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3>{{ pending_batteries }}</h3>
+                <p class="mb-0">Pending Repairs</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3>{{ completed_batteries }}</h3>
+                <p class="mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                {% if current_user.role == 'shop_staff' %}
+                <a href="{{ url_for('main.battery_entry') }}" class="btn btn-primary mb-2 w-100">
+                    <i class="fas fa-plus me-2"></i>Register New Battery
+                </a>
+                {% endif %}
+                {% if current_user.role == 'technician' %}
+                <a href="{{ url_for('main.technician_panel') }}" class="btn btn-warning mb-2 w-100">
+                    <i class="fas fa-tools me-2"></i>Technician Panel
+                </a>
+                {% endif %}
+                <a href="{{ url_for('main.search') }}" class="btn btn-info mb-2 w-100">
+                    <i class="fas fa-search me-2"></i>Search Batteries
+                </a>
+                <a href="{{ url_for('main.export_csv') }}" class="btn btn-secondary w-100">
+                    <i class="fas fa-download me-2"></i>Export All Records
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock me-2"></i>Recent Batteries</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_batteries %}
+                <div class="list-group list-group-flush">
+                    {% for battery in recent_batteries %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ battery.battery_id }}</strong><br>
+                            <small class="text-muted">{{ battery.customer.name }} - {{ battery.customer.mobile }}</small>
+                        </div>
+                        <span class="badge bg-{{ 'success' if battery.status == 'Ready' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'secondary' }}">
+                            {{ battery.status }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No batteries registered yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
