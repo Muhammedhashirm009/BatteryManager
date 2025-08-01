@@ -34,7 +34,9 @@ A Flask-based ERP system for battery repair shops with features for:
 - Fixed billing summary display and shop name integration
 - Updated receipt to use shop name from system settings
 - Made all pending battery IDs clickable across search and finished battery pages
+- Fixed technician panel battery IDs to be clickable in both minimal and detailed views
 - Added Docker support with PostgreSQL for easy deployment and installation
+- Created .env.example file with all required environment variables
 
 ## Environment Variables Required
 - `SESSION_SECRET`: Flask session secret key

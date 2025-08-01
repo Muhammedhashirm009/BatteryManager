@@ -61,7 +61,12 @@
    ```
 
 3. **Use environment file** (recommended):
-   Create `.env` file:
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file with your secure values:
    ```
    DATABASE_URL=postgresql://battery_user:secure_password@postgres:5432/battery_repair
    SESSION_SECRET=your-super-secret-key-here
