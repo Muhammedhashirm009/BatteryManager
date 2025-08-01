@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Finished Batteries - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-check-circle me-2"></i>Finished Batteries</h2>
+    <span class="badge bg-success">{{ batteries|length }} Completed</span>
+</div>
+
+{% if batteries %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Battery ID</th>
+                        <th>Customer</th>
+                        <th>Battery Details</th>
+                        <th>Received Date</th>
+                        <th>Service Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for battery in batteries %}
+                    <tr>
+                        <td><strong>{{ battery.battery_id }}</strong></td>
+                        <td>
+                            {{ battery.customer.name }}<br>
+                            <small class="text-muted">{{ battery.customer.mobile }}</small>
+                        </td>
+                        <td>
+                            {{ battery.battery_type }}<br>
+                            <small class="text-muted">{{ battery.voltage }} / {{ battery.capacity }}</small>
+                        </td>
+                        <td>{{ battery.inward_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if battery.service_price > 0 %}
+                                <strong>₹{{ "%.2f"|format(battery.service_price) }}</strong>
+                            {% else %}
+                                <span class="text-warning">Price not set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('main.receipt', battery_id=battery.id) }}" 
+                                   class="btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-receipt"></i> Receipt
+                                </a>
+                                <a href="{{ url_for('main.bill', battery_id=battery.id) }}" 
+                                   class="btn btn-outline-success" target="_blank">
+                                    <i class="fas fa-file-invoice"></i> Bill
+                                </a>
+                                <button onclick="window.open('{{ url_for('main.bill', battery_id=battery.id) }}'); window.print();" 
+                                        class="btn btn-outline-secondary">
+                                    <i class="fas fa-print"></i> Print
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6><i class="fas fa-info-circle me-2"></i>Quick Actions</h6>
+                <div class="d-grid gap-2">
+                    <button onclick="printAllBills()" class="btn btn-success btn-sm">
+                        <i class="fas fa-print me-1"></i>Print All Bills
+                    </button>
+                    <a href="{{ url_for('main.export_csv') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-download me-1"></i>Export All Data
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6><i class="fas fa-chart-bar me-2"></i>Statistics</h6>
+                <p class="mb-1"><strong>Total Completed:</strong> {{ batteries|length }}</p>
+                <p class="mb-1"><strong>Total Revenue:</strong> ₹{{ "%.2f"|format(batteries|sum(attribute='service_price')) }}</p>
+                <p class="mb-0"><strong>Average Service Price:</strong> 
+                    {% if batteries|length > 0 %}
+                        ₹{{ "%.2f"|format((batteries|sum(attribute='service_price')) / (batteries|length)) }}
+                    {% else %}
+                        ₹0.00
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-battery-empty fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No Finished Batteries</h4>
+    <p class="text-muted">Completed battery repairs will appear here.</p>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-home me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function printAllBills() {
+    if (confirm('This will open all bills in new tabs and print them. Continue?')) {
+        {% for battery in batteries %}
+        window.open('{{ url_for('main.bill', battery_id=battery.id) }}', '_blank');
+        {% endfor %}
+        setTimeout(() => {
+            window.print();
+        }, 1000);
+    }
+}
+</script>
+{% endblock %}

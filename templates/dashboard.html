@@ -47,14 +47,22 @@
                 <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
             </div>
             <div class="card-body">
-                {% if current_user.role == 'shop_staff' %}
+                {% if current_user.role in ['shop_staff', 'admin'] %}
                 <a href="{{ url_for('main.battery_entry') }}" class="btn btn-primary mb-2 w-100">
                     <i class="fas fa-plus me-2"></i>Register New Battery
                 </a>
                 {% endif %}
-                {% if current_user.role == 'technician' %}
+                {% if current_user.role in ['technician', 'shop_staff', 'admin'] %}
                 <a href="{{ url_for('main.technician_panel') }}" class="btn btn-warning mb-2 w-100">
                     <i class="fas fa-tools me-2"></i>Technician Panel
+                </a>
+                {% endif %}
+                {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('main.admin_users') }}" class="btn btn-danger mb-2 w-100">
+                    <i class="fas fa-users me-2"></i>Manage Users
+                </a>
+                <a href="{{ url_for('main.admin_settings') }}" class="btn btn-info mb-2 w-100">
+                    <i class="fas fa-cog me-2"></i>System Settings
                 </a>
                 {% endif %}
                 <a href="{{ url_for('main.search') }}" class="btn btn-info mb-2 w-100">

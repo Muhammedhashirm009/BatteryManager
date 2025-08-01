@@ -1,10 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response, jsonify, send_file
 from flask_login import login_required, current_user
 from app import db
-from models import User, Customer, Battery, BatteryStatusHistory
+from models import User, Customer, Battery, BatteryStatusHistory, SystemSettings
+from werkzeug.security import generate_password_hash
 from datetime import datetime
 import csv
 import io
+import json
+import tempfile
+import os
 
 main_bp = Blueprint('main', __name__)
 
@@ -32,8 +36,8 @@ def dashboard():
 @main_bp.route('/battery/entry', methods=['GET', 'POST'])
 @login_required
 def battery_entry():
-    if current_user.role != 'shop_staff':
-        flash('Access denied. This feature is only available to shop staff.', 'error')
+    if current_user.role not in ['shop_staff', 'admin']:
+        flash('Access denied. This feature is only available to shop staff and admin.', 'error')
         return redirect(url_for('main.dashboard'))
     
     if request.method == 'POST':
@@ -92,8 +96,8 @@ def battery_entry():
 @main_bp.route('/technician/panel')
 @login_required
 def technician_panel():
-    if current_user.role != 'technician':
-        flash('Access denied. This feature is only available to technicians.', 'error')
+    if current_user.role not in ['technician', 'shop_staff', 'admin']:
+        flash('Access denied.', 'error')
         return redirect(url_for('main.dashboard'))
     
     # Get batteries that need technician attention
@@ -106,7 +110,7 @@ def technician_panel():
 @main_bp.route('/battery/update', methods=['POST'])
 @login_required
 def update_battery_status():
-    if current_user.role != 'technician':
+    if current_user.role not in ['technician', 'shop_staff', 'admin']:
         flash('Access denied.', 'error')
         return redirect(url_for('main.dashboard'))
     
@@ -226,3 +230,243 @@ def export_csv():
 def battery_details(battery_id):
     battery = Battery.query.get_or_404(battery_id)
     return render_template('battery_details.html', battery=battery)
+
+# Admin routes
+@main_bp.route('/admin/users')
+@login_required
+def admin_users():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin access required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    users = User.query.all()
+    return render_template('admin/users.html', users=users)
+
+@main_bp.route('/admin/users/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_user():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin access required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        full_name = request.form.get('full_name')
+        role = request.form.get('role')
+        password = request.form.get('password')
+        
+        if not all([username, full_name, role, password]):
+            flash('All fields are required.', 'error')
+            return render_template('admin/add_user.html')
+        
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists.', 'error')
+            return render_template('admin/add_user.html')
+        
+        try:
+            user = User(
+                username=username,
+                full_name=full_name,
+                role=role,
+                password_hash=generate_password_hash(password)
+            )
+            db.session.add(user)
+            db.session.commit()
+            flash(f'User {username} created successfully.', 'success')
+            return redirect(url_for('main.admin_users'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating user: {str(e)}', 'error')
+    
+    return render_template('admin/add_user.html')
+
+@main_bp.route('/admin/users/<int:user_id>/toggle', methods=['POST'])
+@login_required
+def admin_toggle_user(user_id):
+    if current_user.role != 'admin':
+        flash('Access denied.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('Cannot deactivate your own account.', 'error')
+        return redirect(url_for('main.admin_users'))
+    
+    user.is_active = not user.is_active
+    try:
+        db.session.commit()
+        status = 'activated' if user.is_active else 'deactivated'
+        flash(f'User {user.username} has been {status}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating user: {str(e)}', 'error')
+    
+    return redirect(url_for('main.admin_users'))
+
+@main_bp.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+def admin_settings():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin access required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    if request.method == 'POST':
+        shop_name = request.form.get('shop_name')
+        battery_prefix = request.form.get('battery_id_prefix')
+        battery_start = request.form.get('battery_id_start')
+        battery_padding = request.form.get('battery_id_padding')
+        
+        try:
+            SystemSettings.set_setting('shop_name', shop_name)
+            SystemSettings.set_setting('battery_id_prefix', battery_prefix)
+            SystemSettings.set_setting('battery_id_start', battery_start)
+            SystemSettings.set_setting('battery_id_padding', battery_padding)
+            db.session.commit()
+            flash('Settings updated successfully.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating settings: {str(e)}', 'error')
+    
+    settings = {
+        'shop_name': SystemSettings.get_setting('shop_name', 'Battery Repair Service'),
+        'battery_id_prefix': SystemSettings.get_setting('battery_id_prefix', 'BAT'),
+        'battery_id_start': SystemSettings.get_setting('battery_id_start', '1'),
+        'battery_id_padding': SystemSettings.get_setting('battery_id_padding', '4')
+    }
+    
+    return render_template('admin/settings.html', settings=settings)
+
+@main_bp.route('/admin/backup')
+@login_required
+def admin_backup():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin access required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    try:
+        # Create comprehensive backup data
+        backup_data = {
+            'timestamp': datetime.now().isoformat(),
+            'users': [],
+            'customers': [],
+            'batteries': [],
+            'status_history': [],
+            'settings': []
+        }
+        
+        # Export users (without passwords for security)
+        for user in User.query.all():
+            backup_data['users'].append({
+                'username': user.username,
+                'full_name': user.full_name,
+                'role': user.role,
+                'created_at': user.created_at.isoformat() if user.created_at else None,
+                'is_active': user.is_active
+            })
+        
+        # Export customers
+        for customer in Customer.query.all():
+            backup_data['customers'].append({
+                'id': customer.id,
+                'name': customer.name,
+                'mobile': customer.mobile,
+                'created_at': customer.created_at.isoformat() if customer.created_at else None
+            })
+        
+        # Export batteries
+        for battery in Battery.query.all():
+            backup_data['batteries'].append({
+                'id': battery.id,
+                'battery_id': battery.battery_id,
+                'customer_id': battery.customer_id,
+                'battery_type': battery.battery_type,
+                'voltage': battery.voltage,
+                'capacity': battery.capacity,
+                'status': battery.status,
+                'inward_date': battery.inward_date.isoformat() if battery.inward_date else None,
+                'service_price': battery.service_price
+            })
+        
+        # Export status history
+        for history in BatteryStatusHistory.query.all():
+            backup_data['status_history'].append({
+                'id': history.id,
+                'battery_id': history.battery_id,
+                'status': history.status,
+                'comments': history.comments,
+                'updated_by': history.updated_by,
+                'updated_at': history.updated_at.isoformat() if history.updated_at else None
+            })
+        
+        # Export settings
+        for setting in SystemSettings.query.all():
+            backup_data['settings'].append({
+                'setting_key': setting.setting_key,
+                'setting_value': setting.setting_value,
+                'updated_at': setting.updated_at.isoformat() if setting.updated_at else None
+            })
+        
+        # Create JSON response
+        backup_json = json.dumps(backup_data, indent=2)
+        
+        response = make_response(backup_json)
+        response.headers['Content-Disposition'] = f'attachment; filename=battery_erp_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        response.headers['Content-Type'] = 'application/json'
+        
+        return response
+        
+    except Exception as e:
+        flash(f'Error creating backup: {str(e)}', 'error')
+        return redirect(url_for('main.dashboard'))
+
+@main_bp.route('/admin/restore', methods=['GET', 'POST'])
+@login_required
+def admin_restore():
+    if current_user.role != 'admin':
+        flash('Access denied. Admin access required.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    if request.method == 'POST':
+        if 'backup_file' not in request.files:
+            flash('No file selected.', 'error')
+            return render_template('admin/restore.html')
+        
+        file = request.files['backup_file']
+        if file.filename == '':
+            flash('No file selected.', 'error')
+            return render_template('admin/restore.html')
+        
+        if file and file.filename.endswith('.json'):
+            try:
+                backup_data = json.loads(file.read().decode('utf-8'))
+                
+                # Clear existing data (be careful!)
+                confirm = request.form.get('confirm_restore')
+                if confirm != 'CONFIRM':
+                    flash('Please type "CONFIRM" to proceed with restore.', 'error')
+                    return render_template('admin/restore.html')
+                
+                # Restore process would go here
+                flash('Restore functionality is available but requires careful implementation to avoid data loss.', 'warning')
+                
+            except Exception as e:
+                flash(f'Error reading backup file: {str(e)}', 'error')
+        else:
+            flash('Please upload a valid JSON backup file.', 'error')
+    
+    return render_template('admin/restore.html')
+
+@main_bp.route('/staff/backup')
+@login_required
+def staff_backup():
+    if current_user.role not in ['shop_staff', 'admin']:
+        flash('Access denied.', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    return redirect(url_for('main.admin_backup'))
+
+@main_bp.route('/finished_batteries')
+@login_required
+def finished_batteries():
+    finished = Battery.query.filter_by(status='Ready').order_by(Battery.inward_date.desc()).all()
+    return render_template('finished_batteries.html', batteries=finished)

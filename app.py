@@ -36,14 +36,20 @@ def load_user(user_id):
     from models import User
     return User.query.get(int(user_id))
 
-with app.app_context():
-    # Import models to ensure tables are created
-    import models
-    db.create_all()
+def initialize_database():
+    """Initialize database with default users and settings"""
+    from models import User, SystemSettings
+    from werkzeug.security import generate_password_hash
     
     # Create default users if they don't exist
-    from models import User
-    from werkzeug.security import generate_password_hash
+    if not User.query.filter_by(username='admin').first():
+        admin_user = User(
+            username='admin',
+            password_hash=generate_password_hash('admin123'),
+            role='admin',
+            full_name='Administrator'
+        )
+        db.session.add(admin_user)
     
     if not User.query.filter_by(username='staff').first():
         staff_user = User(
@@ -63,11 +69,30 @@ with app.app_context():
         )
         db.session.add(tech_user)
     
+    # Initialize system settings
+    default_settings = [
+        ('shop_name', 'Battery Repair Service'),
+        ('battery_id_prefix', 'BAT'),
+        ('battery_id_start', '1'),
+        ('battery_id_padding', '4')
+    ]
+    
+    for key, value in default_settings:
+        if not SystemSettings.query.filter_by(setting_key=key).first():
+            setting = SystemSettings(setting_key=key, setting_value=value)
+            db.session.add(setting)
+    
     try:
         db.session.commit()
     except Exception as e:
-        logging.error(f"Error creating default users: {e}")
+        logging.error(f"Error creating default users and settings: {e}")
         db.session.rollback()
+
+with app.app_context():
+    # Import models to ensure tables are created
+    import models
+    db.create_all()
+    initialize_database()
 
 # Register blueprints
 from auth import auth_bp

@@ -7,9 +7,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'shop_staff' or 'technician'
+    role = db.Column(db.String(20), nullable=False)  # 'admin', 'shop_staff', or 'technician'
     full_name = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,15 +37,25 @@ class Battery(db.Model):
     
     @staticmethod
     def generate_next_battery_id():
-        """Generate the next sequential battery ID"""
+        """Generate the next sequential battery ID using system settings"""
+        from app import db
+        
+        prefix = SystemSettings.get_setting('battery_id_prefix', 'BAT')
+        start_num = int(SystemSettings.get_setting('battery_id_start', '1'))
+        padding = int(SystemSettings.get_setting('battery_id_padding', '4'))
+        
         last_battery = Battery.query.order_by(Battery.id.desc()).first()
         if last_battery:
             # Extract number from last battery ID (e.g., BAT0001 -> 1)
-            last_num = int(last_battery.battery_id[3:])
-            next_num = last_num + 1
+            try:
+                last_num = int(last_battery.battery_id[len(prefix):])
+                next_num = last_num + 1
+            except (ValueError, IndexError):
+                next_num = start_num
         else:
-            next_num = 1
-        return f"BAT{next_num:04d}"
+            next_num = start_num
+        
+        return f"{prefix}{next_num:0{padding}d}"
 
 class BatteryStatusHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,3 +67,25 @@ class BatteryStatusHistory(db.Model):
     
     # Relationship
     user = db.relationship('User', backref='status_updates')
+
+class SystemSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(50), unique=True, nullable=False)
+    setting_value = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    @staticmethod
+    def get_setting(key, default_value=''):
+        setting = SystemSettings.query.filter_by(setting_key=key).first()
+        return setting.setting_value if setting else default_value
+    
+    @staticmethod
+    def set_setting(key, value):
+        setting = SystemSettings.query.filter_by(setting_key=key).first()
+        if setting:
+            setting.setting_value = value
+            setting.updated_at = datetime.utcnow()
+        else:
+            setting = SystemSettings(setting_key=key, setting_value=value)
+            db.session.add(setting)
+        return setting

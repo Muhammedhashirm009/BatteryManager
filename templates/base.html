@@ -42,18 +42,45 @@
                             <i class="fas fa-home me-1"></i>Dashboard
                         </a>
                     </li>
-                    {% if current_user.role == 'shop_staff' %}
+                    {% if current_user.role in ['shop_staff', 'admin'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.battery_entry') }}">
                             <i class="fas fa-plus me-1"></i>New Battery
                         </a>
                     </li>
                     {% endif %}
-                    {% if current_user.role == 'technician' %}
+                    {% if current_user.role in ['technician', 'shop_staff', 'admin'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.technician_panel') }}">
                             <i class="fas fa-tools me-1"></i>Technician Panel
                         </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.finished_batteries') }}">
+                            <i class="fas fa-check-circle me-1"></i>Finished
+                        </a>
+                    </li>
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin_users') }}">
+                                <i class="fas fa-users me-1"></i>Manage Users
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin_settings') }}">
+                                <i class="fas fa-cog me-1"></i>System Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin_backup') }}">
+                                <i class="fas fa-download me-1"></i>Backup Data
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin_restore') }}">
+                                <i class="fas fa-upload me-1"></i>Restore Data
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                     <li class="nav-item">
@@ -73,6 +100,11 @@
                             <li><a class="dropdown-item" href="{{ url_for('main.export_csv') }}">
                                 <i class="fas fa-download me-1"></i>Export CSV
                             </a></li>
+                            {% if current_user.role in ['shop_staff', 'admin'] %}
+                            <li><a class="dropdown-item" href="{{ url_for('main.staff_backup') }}">
+                                <i class="fas fa-database me-1"></i>Backup Data
+                            </a></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
                                 <i class="fas fa-sign-out-alt me-1"></i>Logout
                             </a></li>
@@ -100,6 +132,18 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert:not(.alert-info)');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

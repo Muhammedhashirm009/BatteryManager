@@ -37,13 +37,11 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <label for="voltage" class="form-label">Voltage *</label>
-                                <select class="form-select" id="voltage" name="voltage" required>
-                                    <option value="">Select Voltage</option>
-                                    <option value="6V">6V</option>
-                                    <option value="12V">12V</option>
-                                    <option value="24V">24V</option>
-                                    <option value="48V">48V</option>
-                                </select>
+                                <input type="text" class="form-control" id="voltage" name="voltage" 
+                                       placeholder="e.g., 12V, 24V" required>
+                                <div class="form-text">
+                                    <small>Common: 6V, 12V, 24V, 48V</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-3">

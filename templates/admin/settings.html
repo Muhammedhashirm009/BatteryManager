@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-cog me-2"></i>System Settings</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shop_name" class="form-label">Shop Name</label>
+                                <input type="text" class="form-control" id="shop_name" name="shop_name" 
+                                       value="{{ settings.shop_name }}" required>
+                                <div class="form-text">This appears on receipts and bills</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="battery_id_prefix" class="form-label">Battery ID Prefix</label>
+                                <input type="text" class="form-control" id="battery_id_prefix" name="battery_id_prefix" 
+                                       value="{{ settings.battery_id_prefix }}" required>
+                                <div class="form-text">e.g., BAT, BATT, etc.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="battery_id_start" class="form-label">Starting Number</label>
+                                <input type="number" class="form-control" id="battery_id_start" name="battery_id_start" 
+                                       value="{{ settings.battery_id_start }}" min="1" required>
+                                <div class="form-text">First battery number (affects new batteries)</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="battery_id_padding" class="form-label">Number Padding</label>
+                                <select class="form-select" id="battery_id_padding" name="battery_id_padding" required>
+                                    <option value="3" {{ 'selected' if settings.battery_id_padding == '3' else '' }}>3 digits (001, 002, 003)</option>
+                                    <option value="4" {{ 'selected' if settings.battery_id_padding == '4' else '' }}>4 digits (0001, 0002, 0003)</option>
+                                    <option value="5" {{ 'selected' if settings.battery_id_padding == '5' else '' }}>5 digits (00001, 00002, 00003)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Preview:</strong> Next battery ID will be: 
+                        <code>{{ settings.battery_id_prefix }}{{ '{:0{}d}'.format(settings.battery_id_start|int, settings.battery_id_padding|int) }}</code>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-warning">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Shop Name:</strong> Changes will appear on all new receipts and bills</li>
+                    <li><strong>Battery ID Settings:</strong> Only affect newly registered batteries</li>
+                    <li><strong>Existing Batteries:</strong> Will keep their current IDs unchanged</li>
+                    <li><strong>Backup Recommended:</strong> Create a backup before making major changes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
