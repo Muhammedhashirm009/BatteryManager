@@ -24,7 +24,7 @@
                         <strong>Battery ID:</strong> {{ battery.battery_id }}
                     </div>
                     <div class="col-6 text-end">
-                        <strong>Bill Date:</strong> {{ moment().format('DD/MM/YYYY') if moment else battery.inward_date.strftime('%d/%m/%Y') }}<br>
+                        <strong>Bill Date:</strong> {{ battery.inward_date.strftime('%d/%m/%Y') }}<br>
                         <strong>Received Date:</strong> {{ battery.inward_date.strftime('%d/%m/%Y') }}
                     </div>
                 </div>

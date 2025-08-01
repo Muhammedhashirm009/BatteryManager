@@ -8,88 +8,140 @@
     <span class="badge bg-warning">{{ batteries|length }} Pending</span>
 </div>
 
-{% if batteries %}
-<div class="row">
-    {% for battery in batteries %}
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{{ battery.battery_id }}</h5>
-                <span class="badge bg-{{ 'secondary' if battery.status == 'Received' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'success' }}">
-                    {{ battery.status }}
-                </span>
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="POST" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" class="form-control" name="search_query" 
+                       placeholder="Search by Battery ID, Customer Name or Mobile Number..." 
+                       value="{{ search_query }}">
             </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-6">
-                        <strong>Customer:</strong><br>
-                        {{ battery.customer.name }}<br>
-                        <small class="text-muted">{{ battery.customer.mobile }}</small>
-                    </div>
-                    <div class="col-6">
-                        <strong>Battery:</strong><br>
-                        {{ battery.battery_type }}<br>
-                        <small class="text-muted">{{ battery.voltage }} / {{ battery.capacity }}</small>
-                    </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Search
+                </button>
+            </div>
+        </form>
+        {% if search_query %}
+        <div class="mt-2">
+            <small class="text-muted">Showing results for: "{{ search_query }}"</small>
+            <a href="{{ url_for('main.technician_panel') }}" class="btn btn-sm btn-outline-secondary ms-2">
+                <i class="fas fa-times me-1"></i>Clear
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if batteries %}
+{% if show_full_details %}
+    <!-- Full Details View (when searched) -->
+    <div class="row">
+        {% for battery in batteries %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ battery.battery_id }}</h5>
+                    <span class="badge bg-{{ 'secondary' if battery.status == 'Received' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'success' }}">
+                        {{ battery.status }}
+                    </span>
                 </div>
-                <p><strong>Received:</strong> {{ battery.inward_date.strftime('%Y-%m-%d %H:%M') }}</p>
-                
-                {% if battery.status_history %}
-                <div class="mb-3">
-                    <strong>Status History:</strong>
-                    <div class="mt-1">
-                        {% for history in battery.status_history[-3:] %}
-                        <small class="d-block text-muted">
-                            {{ history.updated_at.strftime('%m/%d %H:%M') }} - {{ history.status }}
-                            {% if history.comments %}: {{ history.comments }}{% endif %}
-                        </small>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-                
-                <form method="POST" action="{{ url_for('main.update_battery_status') }}">
-                    <input type="hidden" name="battery_id" value="{{ battery.id }}">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Update Status</label>
-                                <select class="form-select" name="status" required>
-                                    <option value="">Select Status</option>
-                                    <option value="Diagnosing" {{ 'selected' if battery.status == 'Diagnosing' else '' }}>Diagnosing</option>
-                                    <option value="Repairing" {{ 'selected' if battery.status == 'Repairing' else '' }}>Repairing</option>
-                                    <option value="Ready" {{ 'selected' if battery.status == 'Ready' else '' }}>Ready</option>
-                                </select>
-                            </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Customer:</strong><br>
+                            {{ battery.customer.name }}<br>
+                            <small class="text-muted">{{ battery.customer.mobile }}</small>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Service Price (₹)</label>
-                                <input type="number" class="form-control" name="service_price" 
-                                       value="{{ battery.service_price if battery.service_price > 0 else '' }}" 
-                                       step="0.01" min="0">
-                            </div>
+                        <div class="col-6">
+                            <strong>Battery:</strong><br>
+                            {{ battery.battery_type }}<br>
+                            <small class="text-muted">{{ battery.voltage }} / {{ battery.capacity }}</small>
                         </div>
                     </div>
+                    <p><strong>Received:</strong> {{ battery.inward_date.strftime('%Y-%m-%d %H:%M') }}</p>
+                    
+                    {% if battery.status_history %}
                     <div class="mb-3">
-                        <label class="form-label">Comments</label>
-                        <textarea class="form-control" name="comments" rows="2" 
-                                  placeholder="Add any comments about the repair..."></textarea>
+                        <strong>Status History:</strong>
+                        <div class="mt-1">
+                            {% for history in battery.status_history[-3:] %}
+                            <small class="d-block text-muted">
+                                {{ history.updated_at.strftime('%m/%d %H:%M') }} - {{ history.status }}
+                                {% if history.comments %}: {{ history.comments }}{% endif %}
+                            </small>
+                            {% endfor %}
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-save me-1"></i>Update Status
-                    </button>
-                    {% if battery.status == 'Ready' %}
-                    <a href="{{ url_for('main.bill', battery_id=battery.id) }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-invoice me-1"></i>Generate Bill
-                    </a>
                     {% endif %}
-                </form>
+                    
+                    <form method="POST" action="{{ url_for('main.update_battery_status') }}">
+                        <input type="hidden" name="battery_id" value="{{ battery.id }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Update Status</label>
+                                    <select class="form-select" name="status" required>
+                                        <option value="">Select Status</option>
+                                        <option value="Diagnosing" {{ 'selected' if battery.status == 'Diagnosing' else '' }}>Diagnosing</option>
+                                        <option value="Repairing" {{ 'selected' if battery.status == 'Repairing' else '' }}>Repairing</option>
+                                        <option value="Ready" {{ 'selected' if battery.status == 'Ready' else '' }}>Ready</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Service Price (₹)</label>
+                                    <input type="number" class="form-control" name="service_price" 
+                                           value="{{ battery.service_price if battery.service_price > 0 else '' }}" 
+                                           step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comments</label>
+                            <textarea class="form-control" name="comments" rows="2" 
+                                      placeholder="Add any comments about the repair..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save me-1"></i>Update Status
+                        </button>
+                        {% if battery.status == 'Ready' %}
+                        <a href="{{ url_for('main.bill', battery_id=battery.id) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-invoice me-1"></i>Generate Bill
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <!-- Minimal View (just Battery IDs) -->
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>{{ batteries|length }} pending batteries found.</strong> Use search above to see full details and work on specific batteries.
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0"><i class="fas fa-list me-2"></i>Pending Battery IDs</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for battery in batteries %}
+                <div class="col-md-3 col-sm-4 col-6 mb-2">
+                    <span class="badge bg-{{ 'secondary' if battery.status == 'Received' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'success' }} p-2">
+                        {{ battery.battery_id }}
+                    </span>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-    {% endfor %}
-</div>
+{% endif %}
 {% else %}
 <div class="text-center py-5">
     <i class="fas fa-battery-empty fa-3x text-muted mb-3"></i>
