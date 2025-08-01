@@ -225,7 +225,11 @@ def search():
 @login_required
 def receipt(battery_id):
     battery = Battery.query.get_or_404(battery_id)
-    return render_template('receipt.html', battery=battery)
+    
+    def get_shop_name():
+        return SystemSettings.get_setting('shop_name', 'Battery Repair Service')
+    
+    return render_template('receipt.html', battery=battery, get_shop_name=get_shop_name)
 
 @main_bp.route('/bill/<int:battery_id>')
 @login_required

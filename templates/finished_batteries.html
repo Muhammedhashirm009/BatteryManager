@@ -26,7 +26,11 @@
                 <tbody>
                     {% for battery in batteries %}
                     <tr>
-                        <td><strong>{{ battery.battery_id }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('main.bill', battery_id=battery.id) }}" class="text-decoration-none">
+                                <strong class="text-success">{{ battery.battery_id }}</strong>
+                            </a>
+                        </td>
                         <td>
                             {{ battery.customer.name }}<br>
                             <small class="text-muted">{{ battery.customer.mobile }}</small>

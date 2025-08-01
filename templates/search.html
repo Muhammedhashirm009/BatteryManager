@@ -44,7 +44,17 @@
                 <tbody>
                     {% for battery in results %}
                     <tr>
-                        <td><strong>{{ battery.battery_id }}</strong></td>
+                        <td>
+                            {% if battery.status == 'Ready' %}
+                                <a href="{{ url_for('main.bill', battery_id=battery.id) }}" class="text-decoration-none">
+                                    <strong class="text-success">{{ battery.battery_id }}</strong>
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('main.technician_panel') }}?search={{ battery.battery_id }}" class="text-decoration-none">
+                                    <strong class="text-primary">{{ battery.battery_id }}</strong>
+                                </a>
+                            {% endif %}
+                        </td>
                         <td>
                             {{ battery.customer.name }}<br>
                             <small class="text-muted">{{ battery.customer.mobile }}</small>

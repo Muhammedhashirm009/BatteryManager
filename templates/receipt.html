@@ -12,7 +12,8 @@
             <div class="card-body" id="receipt-content">
                 <!-- Receipt Header -->
                 <div class="text-center mb-4">
-                    <h3>BATTERY REPAIR SERVICE</h3>
+                    {% set shop_name = get_shop_name() %}
+                    <h3>{{ shop_name.upper() if shop_name else 'BATTERY REPAIR SERVICE' }}</h3>
                     <p class="mb-1">Battery Inward Receipt</p>
                     <hr>
                 </div>
@@ -41,7 +42,11 @@
                         </tr>
                         <tr>
                             <td>Mobile:</td>
-                            <td><strong>{{ battery.customer.mobile }}</strong></td>
+                            <td><strong>{{ battery.customer.mobile }}</strong>
+                            {% if battery.customer.mobile_secondary %}
+                            <br><small>Secondary: {{ battery.customer.mobile_secondary }}</small>
+                            {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </div>
