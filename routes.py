@@ -362,8 +362,8 @@ def admin_settings():
 @main_bp.route('/admin/backup')
 @login_required
 def admin_backup():
-    if current_user.role != 'admin':
-        flash('Access denied. Admin access required.', 'error')
+    if current_user.role not in ['admin', 'shop_staff']:
+        flash('Access denied. Admin or staff access required.', 'error')
         return redirect(url_for('main.dashboard'))
     
     try:

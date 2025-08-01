@@ -20,10 +20,14 @@ A Flask-based ERP system for battery repair shops with features for:
 - Robust security practices required
 
 ## Recent Changes
-- **2025-01-08**: Migrated from Replit Agent to Replit environment
+- **2025-08-01**: Successfully migrated from Replit Agent to Replit environment
 - Database migrated from SQLite to PostgreSQL for production readiness
 - Added ProxyFix middleware for proper HTTPS URL generation
 - Updated configuration for environment variables
+- Fixed backup and restore functionality - now fully operational
+- Updated technician panel to show minimal view unless searched
+- Fixed bill page display issues
+- Updated backup permissions to allow staff users
 
 ## Environment Variables Required
 - `SESSION_SECRET`: Flask session secret key
