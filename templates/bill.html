@@ -103,10 +103,16 @@
                                     <span>Service Charges:</span>
                                     <span class="text-dark">₹{{ "%.2f"|format(battery.service_price) }}</span>
                                 </div>
+                                {% if battery.is_pickup and battery.pickup_charge > 0 %}
+                                <div class="d-flex justify-content-between text-dark">
+                                    <span>Pickup Service:</span>
+                                    <span class="text-dark">₹{{ "%.2f"|format(battery.pickup_charge) }}</span>
+                                </div>
+                                {% endif %}
                                 <hr class="my-2 border-dark">
                                 <div class="d-flex justify-content-between text-dark">
                                     <strong>Total Amount:</strong>
-                                    <strong class="text-dark">₹{{ "%.2f"|format(battery.service_price) }}</strong>
+                                    <strong class="text-dark">₹{{ "%.2f"|format(battery.service_price + (battery.pickup_charge if battery.is_pickup else 0)) }}</strong>
                                 </div>
                             </div>
                         </div>

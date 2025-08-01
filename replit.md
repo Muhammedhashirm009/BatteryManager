@@ -37,6 +37,9 @@ A Flask-based ERP system for battery repair shops with features for:
 - Fixed technician panel battery IDs to be clickable in both minimal and detailed views
 - Added Docker support with PostgreSQL for easy deployment and installation
 - Created .env.example file with all required environment variables
+- Added pickup service charge functionality for batteries collected from customer sites
+- Updated billing and receipt templates to show pickup charges separately
+- Enhanced revenue calculations to include pickup service charges
 
 ## Environment Variables Required
 - `SESSION_SECRET`: Flask session secret key

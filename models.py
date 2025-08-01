@@ -32,6 +32,8 @@ class Battery(db.Model):
     status = db.Column(db.String(20), default='Received', nullable=False)
     inward_date = db.Column(db.DateTime, default=datetime.utcnow)
     service_price = db.Column(db.Float, default=0.0)
+    pickup_charge = db.Column(db.Float, default=0.0)  # Extra charge for pickup service
+    is_pickup = db.Column(db.Boolean, default=False)  # Whether battery was picked up by employees
     
     # Relationship with status history
     status_history = db.relationship('BatteryStatusHistory', backref='battery', lazy=True, cascade='all, delete-orphan')

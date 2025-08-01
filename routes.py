@@ -26,8 +26,12 @@ def dashboard():
     pending_batteries = Battery.query.filter(Battery.status.in_(['Received', 'Diagnosing', 'Repairing'])).count()
     completed_batteries = Battery.query.filter_by(status='Ready').count()
     
-    # Calculate revenue statistics
-    total_revenue = db.session.query(func.sum(Battery.service_price)).filter_by(status='Ready').scalar() or 0
+    # Calculate revenue statistics including pickup charges
+    service_revenue = db.session.query(func.sum(Battery.service_price)).filter_by(status='Ready').scalar() or 0
+    pickup_revenue = db.session.query(func.sum(Battery.pickup_charge)).filter(
+        Battery.status == 'Ready', Battery.is_pickup == True
+    ).scalar() or 0
+    total_revenue = service_revenue + pickup_revenue
     avg_service_price = db.session.query(func.avg(Battery.service_price)).filter_by(status='Ready').scalar() or 0
     
     # Recent batteries
@@ -55,6 +59,8 @@ def battery_entry():
         battery_type = request.form.get('battery_type')
         voltage = request.form.get('voltage')
         capacity = request.form.get('capacity')
+        is_pickup = request.form.get('is_pickup') == '1'
+        pickup_charge = float(request.form.get('pickup_charge', 0) or 0)
         
         if not all([customer_name, mobile, battery_type, voltage, capacity]):
             flash('All fields are required.', 'error')
@@ -82,6 +88,8 @@ def battery_entry():
             battery.voltage = voltage
             battery.capacity = capacity
             battery.status = 'Received'
+            battery.is_pickup = is_pickup
+            battery.pickup_charge = pickup_charge
             db.session.add(battery)
             db.session.flush()  # Get battery record ID
             
@@ -89,7 +97,7 @@ def battery_entry():
             status_history = BatteryStatusHistory()
             status_history.battery_id = battery.id
             status_history.status = 'Received'
-            status_history.comments = 'Battery received from customer'
+            status_history.comments = f'Battery received from customer{" - Pickup service" if is_pickup else ""}'
             status_history.updated_by = current_user.id
             db.session.add(status_history)
             
