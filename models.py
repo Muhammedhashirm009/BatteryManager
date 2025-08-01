@@ -10,7 +10,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False)  # 'admin', 'shop_staff', or 'technician'
     full_name = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_active = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=True)
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,6 +86,9 @@ class SystemSettings(db.Model):
             setting.setting_value = value
             setting.updated_at = datetime.utcnow()
         else:
-            setting = SystemSettings(setting_key=key, setting_value=value)
+            setting = SystemSettings()
+            setting.setting_key = key
+            setting.setting_value = value
+            from app import db
             db.session.add(setting)
         return setting

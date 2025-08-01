@@ -4,6 +4,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -16,10 +17,11 @@ login_manager = LoginManager()
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "battery-repair-erp-secret-key")
+app.secret_key = os.environ.get("SESSION_SECRET")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
-# Configure the database - use SQLite for local storage
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///battery_repair.db"
+# Configure the database - use PostgreSQL for production
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -28,7 +30,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize extensions
 db.init_app(app)
 login_manager.init_app(app)
-login_manager.login_view = 'auth.login'
+login_manager.login_view = 'auth.login'  # type: ignore
 login_manager.login_message = 'Please log in to access this page.'
 
 @login_manager.user_loader
@@ -43,30 +45,27 @@ def initialize_database():
     
     # Create default users if they don't exist
     if not User.query.filter_by(username='admin').first():
-        admin_user = User(
-            username='admin',
-            password_hash=generate_password_hash('admin123'),
-            role='admin',
-            full_name='Administrator'
-        )
+        admin_user = User()
+        admin_user.username = 'admin'
+        admin_user.password_hash = generate_password_hash('admin123')
+        admin_user.role = 'admin'
+        admin_user.full_name = 'Administrator'
         db.session.add(admin_user)
     
     if not User.query.filter_by(username='staff').first():
-        staff_user = User(
-            username='staff',
-            password_hash=generate_password_hash('staff123'),
-            role='shop_staff',
-            full_name='Shop Staff'
-        )
+        staff_user = User()
+        staff_user.username = 'staff'
+        staff_user.password_hash = generate_password_hash('staff123')
+        staff_user.role = 'shop_staff'
+        staff_user.full_name = 'Shop Staff'
         db.session.add(staff_user)
     
     if not User.query.filter_by(username='technician').first():
-        tech_user = User(
-            username='technician',
-            password_hash=generate_password_hash('tech123'),
-            role='technician',
-            full_name='Technician'
-        )
+        tech_user = User()
+        tech_user.username = 'technician'
+        tech_user.password_hash = generate_password_hash('tech123')
+        tech_user.role = 'technician'
+        tech_user.full_name = 'Technician'
         db.session.add(tech_user)
     
     # Initialize system settings
@@ -79,7 +78,9 @@ def initialize_database():
     
     for key, value in default_settings:
         if not SystemSettings.query.filter_by(setting_key=key).first():
-            setting = SystemSettings(setting_key=key, setting_value=value)
+            setting = SystemSettings()
+            setting.setting_key = key
+            setting.setting_value = value
             db.session.add(setting)
     
     try:
