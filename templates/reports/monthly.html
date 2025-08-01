@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report - Battery Repair ERP{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-calendar-alt me-2"></i>Monthly Report - {{ month_name }}</h2>
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-battery-full fa-2x mb-2"></i>
+                <h3>{{ batteries|length }}</h3>
+                <p class="mb-0">Total Batteries This Month</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3>{{ completed_count }}</h3>
+                <p class="mb-0">Completed This Month</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-rupee-sign fa-2x mb-2"></i>
+                <h3>₹{{ "%.2f"|format(total_revenue) }}</h3>
+                <p class="mb-0">Revenue This Month</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed List -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-list me-2"></i>Monthly Battery Records</h5>
+    </div>
+    <div class="card-body">
+        {% if batteries %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Battery ID</th>
+                        <th>Customer</th>
+                        <th>Mobile</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Inward Date</th>
+                        <th>Service Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for battery in batteries %}
+                    <tr>
+                        <td><strong>{{ battery.battery_id }}</strong></td>
+                        <td>{{ battery.customer.name }}</td>
+                        <td>{{ battery.customer.mobile }}</td>
+                        <td>{{ battery.battery_type }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if battery.status == 'Ready' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'secondary' }}">
+                                {{ battery.status }}
+                            </span>
+                        </td>
+                        <td>{{ battery.inward_date.strftime('%d/%m/%Y') }}</td>
+                        <td>₹{{ "%.2f"|format(battery.service_price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No batteries registered this month.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -19,10 +19,16 @@ def index():
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
+    from sqlalchemy import func
+    
     # Get statistics for dashboard
     total_batteries = Battery.query.count()
     pending_batteries = Battery.query.filter(Battery.status.in_(['Received', 'Diagnosing', 'Repairing'])).count()
     completed_batteries = Battery.query.filter_by(status='Ready').count()
+    
+    # Calculate revenue statistics
+    total_revenue = db.session.query(func.sum(Battery.service_price)).filter_by(status='Ready').scalar() or 0
+    avg_service_price = db.session.query(func.avg(Battery.service_price)).filter_by(status='Ready').scalar() or 0
     
     # Recent batteries
     recent_batteries = Battery.query.order_by(Battery.inward_date.desc()).limit(5).all()
@@ -31,7 +37,9 @@ def dashboard():
                          total_batteries=total_batteries,
                          pending_batteries=pending_batteries,
                          completed_batteries=completed_batteries,
-                         recent_batteries=recent_batteries)
+                         recent_batteries=recent_batteries,
+                         total_revenue=float(total_revenue),
+                         avg_service_price=float(avg_service_price))
 
 @main_bp.route('/battery/entry', methods=['GET', 'POST'])
 @login_required
@@ -43,6 +51,7 @@ def battery_entry():
     if request.method == 'POST':
         customer_name = request.form.get('customer_name')
         mobile = request.form.get('mobile')
+        mobile_secondary = request.form.get('mobile_secondary')
         battery_type = request.form.get('battery_type')
         voltage = request.form.get('voltage')
         capacity = request.form.get('capacity')
@@ -58,6 +67,7 @@ def battery_entry():
                 customer = Customer()
                 customer.name = customer_name
                 customer.mobile = mobile
+                customer.mobile_secondary = mobile_secondary
                 db.session.add(customer)
                 db.session.flush()  # Get customer ID
             
@@ -103,7 +113,27 @@ def technician_panel():
     batteries = []
     search_query = ''
     
-    if request.method == 'POST':
+    # Check if there's a search parameter from GET request (e.g., from dashboard links)
+    if request.method == 'GET' and request.args.get('search'):
+        search_query = request.args.get('search', '').strip()
+        if search_query:
+            batteries = Battery.query.join(Customer).filter(
+                db.and_(
+                    Battery.status.in_(['Received', 'Diagnosing', 'Repairing']),
+                    db.or_(
+                        Battery.battery_id.ilike(f'%{search_query}%'),
+                        Customer.mobile.ilike(f'%{search_query}%'),
+                        Customer.name.ilike(f'%{search_query}%')
+                    )
+                )
+            ).order_by(Battery.inward_date.asc()).all()
+            show_full_details = True
+        else:
+            batteries = Battery.query.filter(
+                Battery.status.in_(['Received', 'Diagnosing', 'Repairing'])
+            ).order_by(Battery.inward_date.asc()).all()
+            show_full_details = False
+    elif request.method == 'POST':
         search_query = request.form.get('search_query', '').strip()
         
         if search_query:
@@ -118,18 +148,21 @@ def technician_panel():
                     )
                 )
             ).order_by(Battery.inward_date.asc()).all()
+            show_full_details = True
         else:
             # If no search query, show all pending batteries
             batteries = Battery.query.filter(
                 Battery.status.in_(['Received', 'Diagnosing', 'Repairing'])
             ).order_by(Battery.inward_date.asc()).all()
+            show_full_details = True
     else:
         # GET request - show only battery IDs (minimal view)
         batteries = Battery.query.filter(
             Battery.status.in_(['Received', 'Diagnosing', 'Repairing'])
         ).order_by(Battery.inward_date.asc()).all()
+        show_full_details = False
     
-    return render_template('technician_panel.html', batteries=batteries, search_query=search_query, show_full_details=(request.method == 'POST' and search_query))
+    return render_template('technician_panel.html', batteries=batteries, search_query=search_query, show_full_details=show_full_details)
 
 @main_bp.route('/battery/update', methods=['POST'])
 @login_required
@@ -202,7 +235,10 @@ def bill(battery_id):
         flash('Bill can only be generated for completed repairs.', 'error')
         return redirect(url_for('main.search'))
     
-    return render_template('bill.html', battery=battery)
+    def get_shop_name():
+        return SystemSettings.get_setting('shop_name', 'Battery Repair Service')
+    
+    return render_template('bill.html', battery=battery, get_shop_name=get_shop_name)
 
 @main_bp.route('/export/csv')
 @login_required
@@ -581,3 +617,85 @@ def staff_backup():
 def finished_batteries():
     finished = Battery.query.filter_by(status='Ready').order_by(Battery.inward_date.desc()).all()
     return render_template('finished_batteries.html', batteries=finished)
+
+@main_bp.route('/reports/monthly')
+@login_required
+def monthly_report():
+    from sqlalchemy import func, extract
+    
+    # Get current month data
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    
+    monthly_batteries = Battery.query.filter(
+        extract('month', Battery.inward_date) == current_month,
+        extract('year', Battery.inward_date) == current_year
+    ).all()
+    
+    monthly_completed = Battery.query.filter(
+        Battery.status == 'Ready',
+        extract('month', Battery.inward_date) == current_month,
+        extract('year', Battery.inward_date) == current_year
+    ).count()
+    
+    monthly_revenue = db.session.query(func.sum(Battery.service_price)).filter(
+        Battery.status == 'Ready',
+        extract('month', Battery.inward_date) == current_month,
+        extract('year', Battery.inward_date) == current_year
+    ).scalar() or 0
+    
+    return render_template('reports/monthly.html', 
+                         batteries=monthly_batteries,
+                         completed_count=monthly_completed,
+                         total_revenue=float(monthly_revenue),
+                         month_name=datetime.now().strftime('%B %Y'))
+
+@main_bp.route('/reports/yearly')
+@login_required
+def yearly_report():
+    from sqlalchemy import func, extract
+    
+    # Get current year data
+    current_year = datetime.now().year
+    
+    yearly_batteries = Battery.query.filter(
+        extract('year', Battery.inward_date) == current_year
+    ).all()
+    
+    yearly_completed = Battery.query.filter(
+        Battery.status == 'Ready',
+        extract('year', Battery.inward_date) == current_year
+    ).count()
+    
+    yearly_revenue = db.session.query(func.sum(Battery.service_price)).filter(
+        Battery.status == 'Ready',
+        extract('year', Battery.inward_date) == current_year
+    ).scalar() or 0
+    
+    # Get monthly breakdown
+    monthly_breakdown = []
+    for month in range(1, 13):
+        month_revenue = db.session.query(func.sum(Battery.service_price)).filter(
+            Battery.status == 'Ready',
+            extract('month', Battery.inward_date) == month,
+            extract('year', Battery.inward_date) == current_year
+        ).scalar() or 0
+        
+        month_count = Battery.query.filter(
+            Battery.status == 'Ready',
+            extract('month', Battery.inward_date) == month,
+            extract('year', Battery.inward_date) == current_year
+        ).count()
+        
+        monthly_breakdown.append({
+            'month': datetime(current_year, month, 1).strftime('%B'),
+            'revenue': float(month_revenue),
+            'count': month_count
+        })
+    
+    return render_template('reports/yearly.html', 
+                         batteries=yearly_batteries,
+                         completed_count=yearly_completed,
+                         total_revenue=float(yearly_revenue),
+                         year=current_year,
+                         monthly_breakdown=monthly_breakdown)

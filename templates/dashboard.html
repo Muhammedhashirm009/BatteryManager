@@ -39,6 +39,41 @@
     </div>
 </div>
 
+<!-- Revenue Statistics -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-chart-line me-2"></i>Statistics</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('main.monthly_report') }}" class="btn btn-sm btn-outline-primary">Monthly Report</a>
+                    <a href="{{ url_for('main.yearly_report') }}" class="btn btn-sm btn-outline-secondary">Yearly Report</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h6 class="text-muted">Total Completed</h6>
+                            <h4 class="text-dark">{{ completed_batteries }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h6 class="text-muted">Total Revenue</h6>
+                            <h4 class="text-dark">₹{{ "%.2f"|format(total_revenue) }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-muted">Average Service Price</h6>
+                        <h4 class="text-dark">₹{{ "%.2f"|format(avg_service_price) }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Actions -->
 <div class="row mb-4">
     <div class="col-md-6">
@@ -86,7 +121,9 @@
                     {% for battery in recent_batteries %}
                     <div class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            <strong>{{ battery.battery_id }}</strong><br>
+                            <a href="{{ url_for('main.technician_panel') }}?search={{ battery.battery_id }}" class="text-decoration-none">
+                                <strong class="text-primary">{{ battery.battery_id }}</strong>
+                            </a><br>
                             <small class="text-muted">{{ battery.customer.name }} - {{ battery.customer.mobile }}</small>
                         </div>
                         <span class="badge bg-{{ 'success' if battery.status == 'Ready' else 'warning' if battery.status in ['Diagnosing', 'Repairing'] else 'secondary' }}">

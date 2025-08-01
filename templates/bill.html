@@ -12,7 +12,8 @@
             <div class="card-body" id="bill-content">
                 <!-- Bill Header -->
                 <div class="text-center mb-4">
-                    <h2>BATTERY REPAIR SERVICE</h2>
+                    {% set shop_name = get_shop_name() %}
+                    <h2>{{ shop_name.upper() if shop_name else 'BATTERY REPAIR SERVICE' }}</h2>
                     <p class="mb-1">Service Bill</p>
                     <hr>
                 </div>
@@ -38,6 +39,9 @@
                         <address>
                             <strong>{{ battery.customer.name }}</strong><br>
                             Mobile: {{ battery.customer.mobile }}
+                            {% if battery.customer.mobile_secondary %}
+                            <br>Secondary: {{ battery.customer.mobile_secondary }}
+                            {% endif %}
                         </address>
                     </div>
                     <div class="col-md-6">
@@ -92,17 +96,17 @@
                         </ul>
                     </div>
                     <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body">
+                        <div class="card border-dark">
+                            <div class="card-body bg-white text-dark">
                                 <h6><strong>Billing Summary</strong></h6>
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between text-dark">
                                     <span>Service Charges:</span>
-                                    <span>₹{{ "%.2f"|format(battery.service_price) }}</span>
+                                    <span class="text-dark">₹{{ "%.2f"|format(battery.service_price) }}</span>
                                 </div>
-                                <hr class="my-2">
-                                <div class="d-flex justify-content-between">
+                                <hr class="my-2 border-dark">
+                                <div class="d-flex justify-content-between text-dark">
                                     <strong>Total Amount:</strong>
-                                    <strong>₹{{ "%.2f"|format(battery.service_price) }}</strong>
+                                    <strong class="text-dark">₹{{ "%.2f"|format(battery.service_price) }}</strong>
                                 </div>
                             </div>
                         </div>
